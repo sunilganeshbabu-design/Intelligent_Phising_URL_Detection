@@ -1,0 +1,30 @@
+export const APP_ROUTES = {
+  HOME: 'landing',
+  SCANNER: 'scanner',
+  EMAIL_SCANNER: 'email_scanner',
+  QR_SCANNER: 'qr_scanner',
+  THREAT_LOOKUP: 'threat_lookup',
+  XAI_SIMULATOR: 'whatif',
+  PIPELINE_INSPECTOR: 'modules_pipeline',
+  DASHBOARD: 'dashboard',
+  HISTORY: 'history',
+  REPORTS: 'reports',
+  PROFILE: 'profile',
+  ADMIN: 'admin',
+  LOGIN: 'login',
+  REGISTER: 'register',
+};
+
+export const PROTECTED_ROUTES = [
+  APP_ROUTES.SCANNER,
+  APP_ROUTES.EMAIL_SCANNER,
+  APP_ROUTES.QR_SCANNER,
+  APP_ROUTES.THREAT_LOOKUP,
+  APP_ROUTES.XAI_SIMULATOR,
+  APP_ROUTES.PIPELINE_INSPECTOR,
+  APP_ROUTES.DASHBOARD,
+  APP_ROUTES.HISTORY,
+  APP_ROUTES.REPORTS,
+  APP_ROUTES.PROFILE,
+  APP_ROUTES.ADMIN,
+];
