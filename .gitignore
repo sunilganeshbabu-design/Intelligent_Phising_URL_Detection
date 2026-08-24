@@ -8,6 +8,8 @@ env/
 venv/
 ENV/
 *.db
+*.db-wal
+*.db-shm
 *.sqlite3
 
 # Node / Vite
@@ -21,6 +23,7 @@ dist-ssr/
 npm-debug.log*
 
 # Editor
+.vscode/
 .idea/
 .DS_Store
 *.suo

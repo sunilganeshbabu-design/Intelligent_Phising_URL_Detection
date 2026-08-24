@@ -32,10 +32,11 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local dev
+    allow_origins=["*"],  # Allows all origins for local dev, Vercel, Render, mobile, etc.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Mount static reports directory

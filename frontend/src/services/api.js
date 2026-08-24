@@ -1,6 +1,35 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const PRODUCTION_API_URL = 'https://intelligent-phising-url-detection.onrender.com/api';
+const LOCAL_DEV_API_URL = 'http://127.0.0.1:8000/api';
+
+export const resolveApiBaseUrl = () => {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
+  const isBrowser = typeof window !== 'undefined';
+  const isLocalhostHost = isBrowser && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '0.0.0.0'
+  );
+
+  // If VITE_API_URL is explicitly set and not mistakenly pointing to localhost in production
+  if (envUrl) {
+    if (!isLocalhostHost && (envUrl.includes('127.0.0.1') || envUrl.includes('localhost'))) {
+      return PRODUCTION_API_URL;
+    }
+    return envUrl;
+  }
+
+  // Local development fallback
+  if (isLocalhostHost && import.meta.env.DEV) {
+    return LOCAL_DEV_API_URL;
+  }
+
+  // Default production fallback for deployed sites & mobile/remote devices
+  return PRODUCTION_API_URL;
+};
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

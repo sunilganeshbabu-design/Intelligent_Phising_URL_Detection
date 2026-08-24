@@ -55,7 +55,7 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister }) => {
     setSuccessMsg('');
 
     if (!emailOrUsername.trim()) {
-      setError('Please enter your email address.');
+      setError('Please enter your email or username.');
       return;
     }
     if (!password) {
@@ -294,7 +294,7 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister }) => {
             {viewMode === 'verify_email' && 'Verify Email Address'}
           </h2>
           <p style={{ fontSize: '0.82rem', color: '#94A3B8', margin: 0 }}>
-            {viewMode === 'signin' && 'Enter your email and password to access the cybersecurity workspace.'}
+            {viewMode === 'signin' && 'Enter your email or username and password to access the cybersecurity workspace.'}
             {viewMode === 'forgot_step1' && 'Enter your email address to receive a 6-digit recovery code.'}
             {viewMode === 'forgot_step2' && 'Enter the 6-digit code and choose a new secure password.'}
             {viewMode === 'verify_email' && 'Enter your registered email and 6-digit verification code.'}
@@ -305,16 +305,16 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister }) => {
         {viewMode === 'signin' && (
           <>
             <form onSubmit={handleSignInSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Email Address */}
+              {/* Email or Username */}
               <div>
                 <label style={{ fontSize: '0.78rem', color: '#CBD5E1', marginBottom: '6px', display: 'block', fontWeight: '600' }}>
-                  Email Address *
+                  Email or Username *
                 </label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Mail size={16} color="#64748B" style={{ position: 'absolute', left: '12px', pointerEvents: 'none' }} />
                   <input
-                    type="email"
-                    placeholder="analyst@domain.com"
+                    type="text"
+                    placeholder="analyst@domain.com or username"
                     value={emailOrUsername}
                     onChange={(e) => setEmailOrUsername(e.target.value)}
                     style={{
