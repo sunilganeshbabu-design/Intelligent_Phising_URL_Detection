@@ -68,7 +68,13 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister }) => {
       await login(emailOrUsername.trim(), password, rememberMe);
       if (onLoginSuccess) onLoginSuccess();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password.');
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        setError('Network Error: Unable to reach authentication server. If the server is spinning up, please retry in 10 seconds.');
+      } else {
+        setError(err.message || 'Invalid email, username, or password.');
+      }
     } finally {
       setLoading(false);
     }

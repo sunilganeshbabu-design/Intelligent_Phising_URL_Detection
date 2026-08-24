@@ -93,7 +93,14 @@ const RegisterPage = ({ onRegisterSuccess, onNavigateToSignIn }) => {
         if (onRegisterSuccess) onRegisterSuccess();
       }, 1000);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Registration failed. Please check your information.');
+      const detailMsg = err.response?.data?.detail;
+      if (detailMsg) {
+        setError(detailMsg);
+      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        setError('Network Error: Unable to connect to backend server. If the server is spinning up, please retry in 10 seconds.');
+      } else {
+        setError(err.message || 'Registration failed. Please check your information.');
+      }
     } finally {
       setLoading(false);
     }
