@@ -33,8 +33,10 @@ app = FastAPI(
 ALLOWED_ORIGINS = [
     "https://intelligent-phising-url-detection.vercel.app",
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:3000",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
     "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
@@ -44,7 +46,7 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$|^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -68,39 +70,9 @@ app.include_router(admin_router, prefix=settings.API_V1_STR)
 
 @app.on_event("startup")
 def on_startup():
-    print("[*] Initializing Database tables...")
-    Base.metadata.create_all(bind=engine)
-    
-    # Auto-migrate SQLite url_scans table if scan_type column is missing
-    try:
-        from sqlalchemy import text
-        with engine.connect() as conn:
-            result = conn.execute(text("PRAGMA table_info(url_scans)"))
-            columns = [row[1] for row in result.fetchall()]
-            if "scan_type" not in columns:
-                conn.execute(text("ALTER TABLE url_scans ADD COLUMN scan_type VARCHAR(50) DEFAULT 'url'"))
-                conn.commit()
-                print("[+] Migrated url_scans: added scan_type column")
-
-            user_res = conn.execute(text("PRAGMA table_info(users)"))
-            user_cols = [row[1] for row in user_res.fetchall()]
-            if "full_name" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN full_name VARCHAR(255)"))
-            if "avatar_url" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500)"))
-            if "auth_provider" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN auth_provider VARCHAR(20) DEFAULT 'email'"))
-            if "google_subject_id" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN google_subject_id VARCHAR(100)"))
-            if "email_verified" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0"))
-            if "updated_at" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN updated_at DATETIME"))
-            if "last_login_at" not in user_cols:
-                conn.execute(text("ALTER TABLE users ADD COLUMN last_login_at DATETIME"))
-            conn.commit()
-    except Exception as e:
-        print(f"[-] Migration check: {e}")
+    print("[*] Initializing and verifying Database tables...")
+    from .core.database import init_db_and_migrate
+    init_db_and_migrate()
 
     db: Session = SessionLocal()
     try:

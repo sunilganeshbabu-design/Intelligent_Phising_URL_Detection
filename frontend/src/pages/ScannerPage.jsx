@@ -5,7 +5,8 @@ import {
   ClipboardPaste, X, Globe, Radio, AlertTriangle, ShieldAlert,
   ShieldCheck, ArrowRight, Bookmark, Lock, Cpu
 } from 'lucide-react';
-import { predictSingleUrl, getPdfDownloadUrl, downloadScanPdf } from '../services/api';
+import { predictSingleUrl, getPdfDownloadUrl, downloadScanPdf, formatErrorMessage } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import RiskMeter from '../components/RiskMeter';
 import ShapWaterfallChart from '../components/ShapWaterfallChart';
 import LimeBreakdownChart from '../components/LimeBreakdownChart';
@@ -90,7 +91,15 @@ const PRESET_URLS = [
   }
 ];
 
-const ScannerPage = ({ initialUrl = '', initialTab = 'shap', onSetScanContext, onOpenChatbotWithContext }) => {
+const ScannerPage = ({ 
+  initialUrl = '', 
+  initialTab = 'shap', 
+  onSetScanContext, 
+  onOpenChatbotWithContext,
+  onNavigateToSignIn,
+  onNavigateToRegister
+}) => {
+  const { isAuthenticated } = useAuth();
   const [urlInput, setUrlInput] = useState(initialUrl);
   const [modelName, setModelName] = useState('XGBoost');
   const [loading, setLoading] = useState(false);
@@ -141,7 +150,7 @@ const ScannerPage = ({ initialUrl = '', initialTab = 'shap', onSetScanContext, o
         });
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Analysis failed. Please ensure the backend server is reachable.');
+      setError(formatErrorMessage(err, 'Analysis failed. Please ensure the backend server is reachable.'));
     } finally {
       setLoading(false);
     }
@@ -575,6 +584,53 @@ const ScannerPage = ({ initialUrl = '', initialTab = 'shap', onSetScanContext, o
               </div>
             </div>
           </div>
+
+          {/* Optional Account Feature Prompt for Logged-Out Users */}
+          {!isAuthenticated && (
+            <div
+              className="glass-panel"
+              style={{
+                padding: '14px 20px',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                background: 'rgba(56, 189, 248, 0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                borderRadius: '10px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <ShieldCheck size={20} color="#38BDF8" />
+                <span style={{ fontSize: '0.84rem', color: '#CBD5E1' }}>
+                  Want to save this result and track historical security scans? <strong>Sign In</strong> or <strong>Register</strong> to link scans to your personal dashboard.
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {onNavigateToSignIn && (
+                  <button
+                    type="button"
+                    onClick={onNavigateToSignIn}
+                    className="btn-secondary"
+                    style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+                  >
+                    Sign In
+                  </button>
+                )}
+                {onNavigateToRegister && (
+                  <button
+                    type="button"
+                    onClick={onNavigateToRegister}
+                    className="btn-primary"
+                    style={{ fontSize: '0.78rem', padding: '6px 14px' }}
+                  >
+                    Register
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Deep Inspection Section Tabs */}
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>

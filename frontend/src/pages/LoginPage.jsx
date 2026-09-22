@@ -7,7 +7,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { 
   requestForgotPassword, submitResetPassword, 
-  verifyEmailToken, resendEmailVerification 
+  verifyEmailToken, resendEmailVerification,
+  formatErrorMessage
 } from '../services/api';
 
 const LoginPage = ({ onLoginSuccess, onNavigateToRegister }) => {
@@ -68,13 +69,7 @@ const LoginPage = ({ onLoginSuccess, onNavigateToRegister }) => {
       await login(emailOrUsername.trim(), password, rememberMe);
       if (onLoginSuccess) onLoginSuccess();
     } catch (err) {
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
-        setError('Network Error: Unable to reach authentication server. If the server is spinning up, please retry in 10 seconds.');
-      } else {
-        setError(err.message || 'Invalid email, username, or password.');
-      }
+      setError(formatErrorMessage(err, 'Invalid email, username, or password.'));
     } finally {
       setLoading(false);
     }

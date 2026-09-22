@@ -18,7 +18,7 @@ import BulkScannerModal from './components/BulkScannerModal';
 import SecurityChatbot from './components/SecurityChatbot';
 import { Lock, ShieldAlert, LogIn, UserPlus } from 'lucide-react';
 
-const PROTECTED_TABS = ['dashboard', 'scanner', 'history', 'reports', 'admin', 'modules', 'profile'];
+const PROTECTED_TABS = ['dashboard', 'history', 'reports', 'admin', 'profile'];
 
 const ProtectedRouteGuard = ({ targetTab, onNavigateToSignIn, onNavigateToRegister }) => {
   return (
@@ -93,12 +93,7 @@ const MainApp = () => {
 
   const handleQuickScan = (url) => {
     setActiveScanUrl(url);
-    if (!isAuthenticated) {
-      setRedirectAfterLogin('scanner');
-      setCurrentTab('login');
-    } else {
-      setCurrentTab('scanner');
-    }
+    setCurrentTab('scanner');
   };
 
   const handleSetScanContext = (scanResult) => {
@@ -184,6 +179,8 @@ const MainApp = () => {
                 initialUrl={activeScanUrl}
                 onSetScanContext={handleSetScanContext}
                 onOpenChatbotWithContext={handleOpenChatbotWithContext}
+                onNavigateToSignIn={() => { setRedirectAfterLogin('scanner'); setCurrentTab('login'); }}
+                onNavigateToRegister={() => { setRedirectAfterLogin('scanner'); setCurrentTab('register'); }}
               />
             )}
 

@@ -26,8 +26,13 @@ class Settings:
     REPORTS_DIR: Path = REPORTS_DIR
     MODELS_DIR: Path = MODELS_DIR
     
-    # SQLite Database
-    DATABASE_URL: str = f"sqlite:///{DATA_DIR / 'phishguard.db'}"
+    # Database Configuration (PostgreSQL / SQLite)
+    _DEFAULT_SQLITE_URL: str = f"sqlite:///{DATA_DIR / 'phishguard.db'}"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", _DEFAULT_SQLITE_URL).strip()
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif DATABASE_URL.startswith("postgresql://") and "+psycopg2" not in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
     
     # ML & XAI paths
     MODEL_PATH: Path = MODELS_DIR / "rf_phishing_model.joblib"

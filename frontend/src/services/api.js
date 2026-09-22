@@ -4,6 +4,8 @@ export const PRODUCTION_API_URL = 'https://intelligent-phising-url-detection.onr
 export const LOCAL_DEV_API_URL = 'http://127.0.0.1:8000/api';
 
 export const resolveApiBaseUrl = () => {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
+
   // If running in browser:
   if (typeof window !== 'undefined') {
     const hostname = (window.location.hostname || '').toLowerCase();
@@ -13,28 +15,47 @@ export const resolveApiBaseUrl = () => {
       hostname === '0.0.0.0'
     );
 
-    // On Vercel, Render, custom domains, or mobile devices, ALWAYS use the production Render backend
-    if (!isLocalhost) {
-      return PRODUCTION_API_URL;
+    // When running locally on development/test machine:
+    if (isLocalhost) {
+      if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+        return envUrl;
+      }
+      return LOCAL_DEV_API_URL;
     }
+
+    // On Vercel, Render, or custom deployed domain:
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+      return envUrl;
+    }
+    return PRODUCTION_API_URL;
   }
 
-  // If local development environment variable is explicitly set and running locally
-  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
-  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-    return envUrl;
-  }
-
-  // Local development fallback
-  if (import.meta.env.DEV) {
-    return envUrl || LOCAL_DEV_API_URL;
-  }
-
-  // Default production fallback
-  return PRODUCTION_API_URL;
+  // Fallback for SSR/build:
+  return envUrl || (import.meta.env.DEV ? LOCAL_DEV_API_URL : PRODUCTION_API_URL);
 };
 
 export const API_BASE_URL = resolveApiBaseUrl();
+
+/**
+ * Safely extracts human-readable error messages from Axios / FastAPI / Pydantic responses.
+ * Prevents React object-child crashes when Pydantic returns an array of validation errors (HTTP 422).
+ */
+export const formatErrorMessage = (err, fallback = 'Operation failed.') => {
+  if (err?.response?.data?.detail) {
+    const detail = err.response.data.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      return detail.map((d) => d.msg || d.message || JSON.stringify(d)).join('; ');
+    }
+    if (typeof detail === 'object') {
+      return detail.msg || detail.message || JSON.stringify(detail);
+    }
+  }
+  if (err?.message === 'Network Error' || err?.code === 'ERR_NETWORK') {
+    return `Unable to connect to backend server. Please verify the backend is running at ${API_BASE_URL}`;
+  }
+  return err?.message || fallback;
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -63,6 +84,22 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor to handle session expiration (401)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const requestUrl = error.config?.url || '';
+      const isAuthEndpoint = ['/auth/login', '/auth/register', '/auth/forgot-password'].some(ep => requestUrl.includes(ep));
+      if (!isAuthEndpoint) {
+        localStorage.removeItem('phishguard_token');
+        sessionStorage.removeItem('phishguard_token');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth Endpoints
 export const loginUser = async (username_or_email, password, remember_me = true) => {

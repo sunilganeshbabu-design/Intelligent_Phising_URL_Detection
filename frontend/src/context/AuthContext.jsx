@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUser = useCallback(async () => {
     const currentToken = localStorage.getItem('phishguard_token') || sessionStorage.getItem('phishguard_token');
-    if (!currentToken) {
+    if (!currentToken || currentToken === 'null' || currentToken === 'undefined') {
       setUser(null);
       setLoading(false);
       return null;
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     refreshUser();
-  }, [token, refreshUser]);
+  }, [refreshUser]);
 
   const saveToken = (accessToken, rememberMe = true) => {
     if (rememberMe) {

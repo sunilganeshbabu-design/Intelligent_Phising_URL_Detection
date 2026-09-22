@@ -61,9 +61,12 @@ def generate_verification_code(length: int = 6) -> str:
 
 # ----------------- Password Security & Validation -----------------
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    if not hashed_password:
+    if not hashed_password or not plain_password:
         return False
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception:
+        return False
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)

@@ -3,7 +3,7 @@ import datetime
 from typing import Dict, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 from ..core.database import get_db
 from ..core.config import settings
@@ -37,11 +37,11 @@ def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db
     clean_email = user_in.email.lower().strip()
     
     # 1. Check duplicate email in database
-    existing_user = db.query(User).filter(User.email == clean_email).first()
+    existing_user = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with this email address already exists. Please sign in."
+            detail="Email is already registered. Please sign in or use another email."
         )
 
     # 2. Validate Password Policy
@@ -59,15 +59,24 @@ def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db
             detail="Passwords do not match. Please verify your password confirmation."
         )
 
-    # 4. Generate clean username from email / name
+    # 4. Generate or validate username
     raw_name = (user_in.full_name or "").strip()
     candidate_username = (user_in.username or "").strip()
-    if not candidate_username:
+    if candidate_username:
+        # Explicit username provided: check uniqueness
+        existing_name = db.query(User).filter(func.lower(User.username) == candidate_username.lower()).first()
+        if existing_name:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username is already taken. Please choose another username."
+            )
+    else:
+        # Auto-generate unique username
         base_username = raw_name.lower().replace(" ", "_") if raw_name else clean_email.split("@")[0]
         base_username = "".join(c for c in base_username if c.isalnum() or c == "_") or "analyst"
         candidate_username = base_username
         suffix = 1
-        while db.query(User).filter(User.username == candidate_username).first():
+        while db.query(User).filter(func.lower(User.username) == candidate_username.lower()).first():
             candidate_username = f"{base_username}_{suffix}"
             suffix += 1
 
@@ -124,10 +133,10 @@ def login(login_in: UserLogin, request: Request, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
     login_target = login_in.username_or_email.lower().strip()
     
-    enforce_rate_limit(f"login:{client_ip}:{login_target}", max_requests=10, window_seconds=60, action_desc="login attempts")
+    enforce_rate_limit(f"login:{client_ip}:{login_target}", max_requests=30, window_seconds=60, action_desc="login attempts")
 
     user = db.query(User).filter(
-        or_(User.username == login_target, User.email == login_target)
+        or_(func.lower(User.username) == login_target, func.lower(User.email) == login_target)
     ).first()
 
     # Generic security error message
